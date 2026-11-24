@@ -221,6 +221,7 @@
       ui.focusShotInput();
       return;
     }
+    state.typedShot = true;
     fireAt(pos.row, pos.col);
   }
 
@@ -244,6 +245,7 @@
     }
     say('Your turn: call your shot.', text + ' Your turn.');
     render();
+    if (state.typedShot) ui.focusShotInput();
   }
 
   // ----- End of game -----
@@ -277,7 +279,7 @@
   ui.init({
     cellActivated: function (which, row, col) {
       if (which === 'player' && state.game.phase === 'placing') placeAt(row, col);
-      else if (which === 'enemy') fireAt(row, col);
+      else if (which === 'enemy') { state.typedShot = false; fireAt(row, col); }
     },
     selectShip: selectShip,
     rotate: rotate,
