@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Battleship tests</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 1.5rem; }
+    ul { list-style: none; padding: 0; font-family: ui-monospace, monospace; }
+    li { padding: 0.15rem 0; }
+    .pass { color: #116329; }
+    .fail { color: #b3261e; font-weight: bold; }
+    #summary { font-size: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Battleship automated tests</h1>
+  <div id="results" role="status"></div>
+
+  <!-- Order matters: game code first, then the test runner, then the tests. -->
+  <script src="../js/rules.js"></script>
+  <script src="harness.js"></script>
+  <script src="rules.test.js"></script>
+  <script>TestHarness.run(document.getElementById('results'));</script>
+</body>
+</html>
