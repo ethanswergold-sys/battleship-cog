@@ -152,11 +152,22 @@
       if (btn) handlers.selectShip(btn.dataset.ship);
     });
 
+    // Shift rotates when pressed and released on its own, so Shift+Tab doesn't rotate.
+    var shiftAlone = false;
+    function placingKeys(e) {
+      return current && current.game.phase === 'placing' &&
+        !(e.target && e.target.tagName === 'INPUT') && !(e.ctrlKey || e.metaKey || e.altKey);
+    }
     document.addEventListener('keydown', function (e) {
-      if (!current || current.game.phase !== 'placing' || e.repeat) return;
-      if (e.target && e.target.tagName === 'INPUT') return;
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key === 'Shift' || e.key === 'r' || e.key === 'R') handlers.rotate();
+      if (e.key !== 'Shift') shiftAlone = false;
+      else if (!e.repeat) shiftAlone = true;
+      if (!placingKeys(e) || e.repeat) return;
+      if (e.key === 'r' || e.key === 'R') handlers.rotate();
+    });
+    document.addEventListener('keyup', function (e) {
+      if (e.key !== 'Shift' || !shiftAlone) return;
+      shiftAlone = false;
+      if (placingKeys(e)) handlers.rotate();
     });
   }
 
