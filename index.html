@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Classic Battleship in your browser: you against MacArthur, the computer.">
+  <title>Battleship vs. MacArthur</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="phase-placing">
+  <header class="site-header">
+    <h1>Battleship <span class="vs">vs. MacArthur</span></h1>
+    <p class="tally" id="tally">Wins 0 · Losses 0</p>
+  </header>
+
+  <main>
+    <!-- Screen readers hear every announcement from this hidden live region. -->
+    <p id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+    <section class="status" aria-label="Game status">
+      <p id="prompt" class="prompt"></p>
+      <p id="last-player" class="last-shot"></p>
+      <p id="last-computer" class="last-shot"></p>
+    </section>
+
+    <section id="placement" class="panel" aria-labelledby="placement-heading">
+      <h2 id="placement-heading">Place your fleet</h2>
+      <p class="help">
+        Pick a ship, then click (or tap) a square on <strong>Your fleet</strong> to place it.
+        The ship starts at that square and runs right or down.
+        Turn it with the <strong>Rotate</strong> button, the <kbd>Shift</kbd> key or <kbd>R</kbd>.
+        Click a placed ship to pick it up again.
+        Keyboard: <kbd>Tab</kbd> to the board, arrow keys to move, <kbd>Enter</kbd> to place.
+      </p>
+      <ul id="ship-list" class="ship-list" aria-label="Ships to place"></ul>
+      <div class="controls">
+        <button type="button" id="rotate">Rotate</button>
+        <button type="button" id="randomize">Randomize</button>
+        <button type="button" id="clear">Clear</button>
+        <button type="button" id="start" class="primary" disabled>Start game</button>
+      </div>
+    </section>
+
+    <section id="fire-panel" class="panel" aria-labelledby="fire-heading" hidden>
+      <h2 id="fire-heading" class="sr-only">Call your shot</h2>
+      <form id="shot-form" class="shot-form" autocomplete="off">
+        <label for="shot-input">Call your shot</label>
+        <input id="shot-input" name="shot" type="text" inputmode="text" autocapitalize="characters"
+               spellcheck="false" maxlength="6" placeholder="e.g. D4" aria-describedby="shot-help">
+        <button type="submit" id="fire" class="primary">Fire</button>
+      </form>
+      <p id="shot-help" class="help">
+        Type a letter A–J and a number 1–10, or click a square on <strong>MacArthur's waters</strong>.
+        Keyboard: arrow keys to move, <kbd>Enter</kbd> to fire.
+      </p>
+    </section>
+
+    <section id="end-panel" class="panel end-panel" aria-labelledby="end-panel-heading" hidden>
+      <h2 id="end-panel-heading"></h2>
+      <div class="controls">
+        <button type="button" id="reveal-inline">Reveal MacArthur's ships</button>
+        <button type="button" id="play-again-inline" class="primary">Play again</button>
+      </div>
+    </section>
+
+    <div class="boards">
+      <section id="player-wrap" class="board-wrap" aria-labelledby="player-heading">
+        <h2 id="player-heading">Your fleet</h2>
+        <div id="player-board"></div>
+        <ul id="player-fleet" class="fleet-status" aria-label="Your ships"></ul>
+      </section>
+      <section id="enemy-wrap" class="board-wrap" aria-labelledby="enemy-heading">
+        <h2 id="enemy-heading">MacArthur's waters</h2>
+        <div id="enemy-board"></div>
+        <ul id="enemy-fleet" class="fleet-status" aria-label="MacArthur's ships"></ul>
+      </section>
+    </div>
+
+    <section class="legend" aria-label="Legend">
+      <span><span class="peg miss" aria-hidden="true"></span> White peg = miss</span>
+      <span><span class="peg hit" aria-hidden="true"></span> Red peg = hit</span>
+      <span><span class="swatch ship" aria-hidden="true"></span> Your ship</span>
+      <span><span class="swatch sunk" aria-hidden="true"></span> Sunk ship</span>
+    </section>
+
+    <section class="log-wrap" aria-labelledby="log-heading">
+      <h2 id="log-heading">Shot history</h2>
+      <ol id="log" class="log"></ol>
+    </section>
+  </main>
+
+  <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title" aria-describedby="end-text">
+    <h2 id="end-title"></h2>
+    <p id="end-text"></p>
+    <p id="end-tally" class="tally"></p>
+    <div class="controls">
+      <button type="button" id="reveal">Reveal MacArthur's ships</button>
+      <button type="button" id="play-again" class="primary">Play again</button>
+    </div>
+  </dialog>
+
+  <!-- Order matters: rules, then MacArthur, then the screen, then startup. -->
+  <script src="js/rules.js"></script>
+  <script src="js/computer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
