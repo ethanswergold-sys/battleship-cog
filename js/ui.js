@@ -126,7 +126,7 @@
     ['tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
       'rotate', 'randomize', 'clear', 'start', 'fire-panel', 'shot-form', 'shot-input', 'fire',
       'end-panel', 'end-panel-heading', 'reveal-inline', 'play-again-inline', 'player-board',
-      'enemy-board', 'player-fleet', 'enemy-fleet', 'log', 'end-dialog', 'end-title', 'end-text',
+      'enemy-board', 'player-fleet', 'enemy-fleet', 'log', 'end-dialog', 'end-title', 'end-last', 'end-text',
       'end-tally', 'reveal', 'play-again'].forEach(function (id) {
       els[id] = byId(id);
     });
@@ -348,6 +348,7 @@
   function showEndScreen(state, info) {
     var lost = state.game.winner === 'computer';
     els['end-title'].textContent = lost ? 'MacArthur wins' : 'Victory!';
+    els['end-last'].textContent = 'Final shot: ' + info.lastShot;
     els['end-text'].textContent = lost
       ? 'MacArthur sank your entire fleet.'
       : 'You sank MacArthur\'s entire fleet in ' + info.playerShots + ' shots.';

@@ -27,6 +27,7 @@
     prompt: '',
     lastPlayer: '',
     lastComputer: '',
+    typedShot: false,
     tally: loadTally()
   };
   var computerTimer = null;
@@ -74,6 +75,7 @@
     state.log = [];
     state.lastPlayer = '';
     state.lastComputer = '';
+    state.typedShot = false;
     say(placingPrompt(), 'New game. ' + placingPrompt());
     render();
   }
@@ -257,7 +259,7 @@
     var headline = won ? 'You win! You sank MacArthur\u2019s entire fleet.' : 'MacArthur wins. Your fleet has been sunk.';
     say(headline, lastText + ' ' + headline);
     render();
-    ui.showEndScreen(state, { playerShots: playerShots() });
+    ui.showEndScreen(state, { playerShots: playerShots(), lastShot: lastText });
   }
 
   function reveal() {
