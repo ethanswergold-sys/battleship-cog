@@ -259,6 +259,8 @@
   function renderShipList(state) {
     var placed = {};
     state.game.player.ships.forEach(function (s) { placed[s.name] = true; });
+    var active = document.activeElement;
+    var focusedShip = active && els['ship-list'].contains(active) ? active.dataset.ship : null;
     els['ship-list'].innerHTML = '';
     rules.FLEET.forEach(function (entry) {
       var li = document.createElement('li');
@@ -272,6 +274,7 @@
         (placed[entry.name] ? 'placed' : 'not placed'));
       li.appendChild(btn);
       els['ship-list'].appendChild(li);
+      if (focusedShip === entry.name) btn.focus();
     });
   }
 
