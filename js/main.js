@@ -75,6 +75,7 @@
   function resetBattle() {
     clearTimeout(computerTimer);
     ui.hideEndScreen();
+    ui.clearShotInput();
     var battle = opponents.newBattle(state.rank, rng);
     state.rank = battle.rank;
     state.rankLabel = opponents.find(battle.rank).label;
