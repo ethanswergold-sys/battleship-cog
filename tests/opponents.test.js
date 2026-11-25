@@ -550,4 +550,51 @@
     }
     assert.equal(game.winner, 'computer');
   });
+
+  // ----- Play Again -----
+
+  test('Play Again at the same rank resets both boards, both fleets and MacArthur\'s memory', function () {
+    opponents.list().forEach(function (rank) {
+      var rng = rules.createRng(77);
+      var old = opponents.newBattle(rank.id, rng);
+      rules.placeFleetRandomly(old.game.player, rng);
+      rules.startGame(old.game, rng);
+      var next = 0;
+      while (old.game.phase === 'playing') { // the player sweeps A1, A2, ... until someone wins
+        if (old.game.turn === 'player') {
+          rules.playerFire(old.game, Math.floor(next / 10), next % 10);
+          next++;
+        } else {
+          var shot = old.opponent.chooseShot();
+          var outcome = rules.computerFire(old.game, shot.row, shot.col);
+          old.opponent.recordResult(shot.row, shot.col, outcome);
+          old.computerShots.push({ row: shot.row, col: shot.col, outcome: outcome });
+        }
+      }
+      assert.equal(old.game.phase, 'over', rank.label + ': the first battle finished');
+      var oldEnemy = JSON.stringify(old.game.enemy.ships.map(function (s) { return s.cells; }));
+
+      var again = opponents.newBattle(old.rank, rng);
+      assert.equal(again.rank, rank.id, 'same rank');
+      assert.equal(again.game.phase, 'placing');
+      assert.equal(again.game.winner, null);
+      assert.equal(again.game.player.locked, false, 'your ships can be placed again');
+      assert.equal(again.game.player.ships.length, 0, 'your fleet is cleared');
+      assert.equal(shotCount(again.game.player) + shotCount(again.game.enemy), 0, 'both boards are clear');
+      assert.ok(rules.isFleetComplete(again.game.enemy), 'MacArthur has a full new fleet');
+      again.game.enemy.ships.forEach(function (s) { assert.equal(s.hits, 0, s.name + ' is undamaged'); });
+      assert.notEqual(JSON.stringify(again.game.enemy.ships.map(function (s) { return s.cells; })), oldEnemy,
+        'MacArthur re-placed his ships');
+      assert.deepEqual(again.computerShots, []);
+
+      // MacArthur's memory is empty: on a board with no ships he finds 100 fresh squares.
+      var seen = {};
+      for (var i = 0; i < 100; i++) {
+        var s = again.opponent.chooseShot();
+        assert.ok(s && !seen[s.row + ',' + s.col], rank.label + ' fires at a fresh square');
+        seen[s.row + ',' + s.col] = true;
+        again.opponent.recordResult(s.row, s.col, { result: 'miss' });
+      }
+    });
+  });
 })();

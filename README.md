@@ -49,6 +49,28 @@ GitHub Pages: Settings → Pages → deploy from the `main` branch, root folder.
 
 ## Running the tests
 
-- **In a browser:** double-click `tests/run.html`. Every check shows PASS or FAIL.
-- **From a terminal (Node 18 or newer):** `node --test tests/*.test.js`
-- **On GitHub:** the tests run automatically on every pull request.
+The automated tests check the game rules and MacArthur at every rank without opening the game. They cover:
+
+- **Ship placement:** ships can't overlap or go off the board, and every square is checked for every ship in
+  both directions, including the last row (J) and last column (10).
+- **Firing:** hits, misses and sinks are reported correctly and pass the turn. A shot at a square that was
+  already tried is rejected and doesn't use up the turn.
+- **Winning:** the game ends exactly when the last ship square is hit, not one shot earlier.
+- **MacArthur:** at every rank (Rookie, Officer, General), he never fires at the same square twice or off the
+  board, across 1,000 simulated games per rank.
+- **Play Again and Change rank:** both boards, both fleets and MacArthur's memory are fully reset.
+
+There are three ways to run them:
+
+1. **In a browser, no install needed:** double-click `tests/run.html`. Each check shows PASS or FAIL, and the
+   total is at the top. It takes a few seconds.
+2. **From a terminal:** install [Node.js](https://nodejs.org) 18 or newer, open a terminal in this folder and run:
+   ```
+   node --test tests/*.test.js
+   ```
+   The last lines show how many tests passed (`pass`) and failed (`fail`).
+3. **On GitHub, automatically:** every pull request runs the tests (see `.github/workflows/test.yml`). The
+   result appears as the **test** check near the bottom of the pull request: a green tick means everything
+   passed.
+
+To see how many shots each rank needs to win, run `node tests/simulate.js`.
