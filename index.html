@@ -9,7 +9,7 @@
 </head>
 <body class="phase-choosing">
   <header class="site-header">
-    <h1>Battleship <span class="vs">vs. MacArthur</span></h1>
+    <h1>Battleship <span class="vs" id="vs-line">vs. MacArthur</span></h1>
     <div class="header-controls">
       <p class="rank-badge" id="rank-badge" hidden></p>
       <button type="button" id="new-game" hidden>New game</button>
@@ -30,6 +30,12 @@
     <section id="rank-panel" class="panel rank-panel" aria-labelledby="rank-heading" hidden>
       <h2 id="rank-heading" tabindex="-1">Choose your opponent</h2>
       <form id="rank-form">
+        <div class="name-field">
+          <label for="player-name">Your name</label>
+          <input id="player-name" name="player-name" type="text" autocomplete="nickname"
+                 spellcheck="false" placeholder="You" aria-describedby="name-help">
+          <p id="name-help" class="help">Optional, up to 20 characters. Shown on your board and in the shot history.</p>
+        </div>
         <fieldset class="rank-options">
           <legend class="help">MacArthur can play at three ranks. Pick one with the mouse, a tap or the
             arrow keys, then press <strong>Start battle</strong>.</legend>
@@ -44,7 +50,7 @@
     <section id="placement" class="panel" aria-labelledby="placement-heading">
       <h2 id="placement-heading">Place your fleet</h2>
       <p class="help">
-        Pick a ship, then click (or tap) a square on <strong>Your fleet</strong> to place it.
+        Pick a ship, then click (or tap) a square on your fleet's board to place it.
         The ship starts at that square and runs right or down.
         Turn it with the <strong>Rotate</strong> button, the <kbd>Shift</kbd> key or <kbd>R</kbd>.
         Click a placed ship to pick it up again.

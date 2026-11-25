@@ -252,6 +252,19 @@
   }
 
   // The announcement for a shot, worded for the person playing.
+  // The player's name as typed on the start screen: spaces tidied, at most
+  // NAME_MAX_LENGTH characters. A blank name gives '' (the game then says "You").
+  var NAME_MAX_LENGTH = 20;
+  function cleanPlayerName(text) {
+    var name = String(text == null ? '' : text).replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+    return Array.from(name).slice(0, NAME_MAX_LENGTH).join('').trim();
+  }
+
+  // "Ethan" -> "Ethan's"; the default "You" -> "Your".
+  function possessive(name) {
+    return name === 'You' ? 'Your' : name + '\u2019s';
+  }
+
   function shotMessage(shooter, row, col, outcome) {
     var where = formatCoordinate(row, col);
     if (shooter === 'player') {
@@ -272,6 +285,9 @@
     SIZE: SIZE,
     ROW_LETTERS: ROW_LETTERS,
     COMPUTER_NAME: COMPUTER_NAME,
+    NAME_MAX_LENGTH: NAME_MAX_LENGTH,
+    cleanPlayerName: cleanPlayerName,
+    possessive: possessive,
     FLEET: FLEET,
     HORIZONTAL: HORIZONTAL,
     VERTICAL: VERTICAL,

@@ -14,6 +14,7 @@
   var ui = root.Battleship.ui;
   var NAME = rules.COMPUTER_NAME;
   var TALLY_KEY = 'battleship-cog-tally';
+  var NAME_KEY = 'battleship-cog-name';
 
   var params = new URLSearchParams(root.location.search);
   var rng = params.has('seed') ? rules.createRng(Number(params.get('seed'))) : Math.random;
@@ -22,6 +23,7 @@
   var state = {
     game: null,
     picking: true,
+    playerName: loadName(),
     rank: opponents.DEFAULT_RANK,
     rankLabel: opponents.find(opponents.DEFAULT_RANK).label,
     opponent: null,
@@ -47,6 +49,18 @@
     } catch (e) { /* storage unavailable: keep the tally in memory only */ }
     return { wins: 0, losses: 0 };
   }
+
+  // The player's name is remembered the same way as the tally.
+  function loadName() {
+    try { return rules.cleanPlayerName(root.sessionStorage.getItem(NAME_KEY)); } catch (e) { return ''; }
+  }
+
+  function saveName() {
+    try { root.sessionStorage.setItem(NAME_KEY, state.playerName); } catch (e) { /* ignore */ }
+  }
+
+  // "Ethan", or "You" when no name was given.
+  function playerLabel() { return state.playerName || 'You'; }
 
   function saveTally() {
     try { root.sessionStorage.setItem(TALLY_KEY, JSON.stringify(state.tally)); } catch (e) { /* ignore */ }
@@ -107,11 +121,13 @@
     say('Choose your opponent.', 'Choose your opponent: Rookie, Officer or General. ' +
       'Use the arrow keys to pick, then press Enter.');
     render();
-    ui.showPicker(opponents.DEFAULT_RANK);
+    ui.showPicker(opponents.DEFAULT_RANK, state.playerName);
   }
 
-  function chooseRank(id) {
+  function chooseRank(id, name) {
     if (!state.picking || !opponents.find(id)) return;
+    state.playerName = rules.cleanPlayerName(name);
+    saveName();
     state.rank = id;
     state.picking = false;
     newGame(NAME + ' plays at the rank of ' + opponents.find(id).label + '.');
@@ -201,8 +217,9 @@
     }
     state.selected = null;
     if (result.firstTurn === 'player') {
-      say('Your turn: call your shot.', 'Coin flip: you go first. Call your shot.');
-      state.lastPlayer = 'Coin flip: you go first.';
+      var first = state.playerName ? state.playerName + ' goes first' : 'you go first';
+      say('Your turn: call your shot.', 'Coin flip: ' + first + '. Call your shot.');
+      state.lastPlayer = 'Coin flip: ' + first + '.';
       render();
       ui.focusShotInput();
     } else {
@@ -238,9 +255,9 @@
       return;
     }
     ui.clearShotInput();
-    state.lastPlayer = 'You: ' + text;
+    state.lastPlayer = playerLabel() + ': ' + text;
     state.lastComputer = '';
-    addLog('player', 'You: ' + text);
+    addLog('player', playerLabel() + ': ' + text);
     if (game.phase === 'over') {
       endGame(text);
       return;
@@ -295,7 +312,7 @@
     var won = state.game.winner === 'player';
     if (won) state.tally.wins++; else state.tally.losses++;
     saveTally();
-    var headline = won ? 'You win! You sank MacArthur\u2019s entire fleet.' : 'MacArthur wins. Your fleet has been sunk.';
+    var headline = won ? (state.playerName ? state.playerName + ' wins!' : 'You win!') + ' You sank MacArthur\u2019s entire fleet.' : 'MacArthur wins. Your fleet has been sunk.';
     say(headline, lastText + ' ' + headline);
     render();
     ui.showEndScreen(state, { playerShots: playerShots(), lastShot: lastText });

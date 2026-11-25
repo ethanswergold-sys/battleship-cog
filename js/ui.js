@@ -123,7 +123,7 @@
 
   function init(h) {
     handlers = h;
-    ['rank-badge', 'new-game', 'rank-panel', 'rank-heading', 'rank-form', 'rank-choices', 'change-rank',
+    ['player-name', 'player-heading', 'vs-line', 'rank-badge', 'new-game', 'rank-panel', 'rank-heading', 'rank-form', 'rank-choices', 'change-rank',
       'change-rank-inline', 'tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
       'rotate', 'randomize', 'clear', 'start', 'fire-panel', 'shot-form', 'shot-input', 'fire',
       'end-panel', 'end-panel-heading', 'reveal-inline', 'play-again-inline', 'player-board',
@@ -164,12 +164,12 @@
     }
     els['rank-form'].addEventListener('submit', function (e) {
       e.preventDefault();
-      handlers.chooseRank(chosenRank());
+      handlers.chooseRank(chosenRank(), els['player-name'].value);
     });
     els['rank-choices'].addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      handlers.chooseRank(chosenRank());
+      handlers.chooseRank(chosenRank(), els['player-name'].value);
     });
     els['new-game'].addEventListener('click', function () { handlers.newGame(); });
     els['change-rank'].addEventListener('click', function () { handlers.changeRank(); });
@@ -349,6 +349,12 @@
     var picking = state.picking;
     document.body.className = 'phase-' + (picking ? 'choosing' : game.phase);
 
+    var name = state.playerName || 'You';
+    var whose = rules.possessive(name);
+    els['player-heading'].textContent = whose + ' fleet';
+    els['player-fleet'].setAttribute('aria-label', whose + ' ships');
+    els['vs-line'].textContent = state.playerName ? state.playerName + ' vs. MacArthur' : 'vs. MacArthur';
+
     var rankLabel = state.rankLabel;
     els['rank-badge'].textContent = 'Rank: ' + rankLabel;
     els['rank-badge'].setAttribute('aria-label', 'MacArthur\'s rank: ' + rankLabel);
@@ -377,7 +383,8 @@
 
     if (game.phase === 'over') {
       var lost = game.winner === 'computer';
-      els['end-panel-heading'].textContent = lost ? 'MacArthur wins this round.' : 'You win!';
+      els['end-panel-heading'].textContent = lost ? 'MacArthur wins this round.' :
+        (state.playerName ? state.playerName + ' wins!' : 'You win!');
       els['reveal-inline'].hidden = !lost || state.revealed;
     }
 
@@ -395,7 +402,8 @@
 
   function showEndScreen(state, info) {
     var lost = state.game.winner === 'computer';
-    els['end-title'].textContent = lost ? 'MacArthur wins' : 'Victory!';
+    els['end-title'].textContent = lost ? 'MacArthur wins' :
+      (state.playerName ? 'Victory, ' + state.playerName + '!' : 'Victory!');
     els['end-rank'].textContent = (lost ? 'Beaten by MacArthur at the rank of ' : 'You beat MacArthur at the rank of ') +
       state.rankLabel + '.';
     els['end-last'].textContent = 'Final shot: ' + info.lastShot;
@@ -421,13 +429,14 @@
     }
   }
 
-  // Shows the picker with `rankId` selected and puts keyboard focus on it.
-  function showPicker(rankId) {
+  // Shows the start screen with the saved name filled in and `rankId`
+  // selected. Focus goes to the name box the first time, then to the rank.
+  function showPicker(rankId, playerName) {
+    els['player-name'].value = playerName || '';
     var input = byId('rank-' + rankId);
-    if (input) {
-      input.checked = true;
-      input.focus();
-    }
+    if (input) input.checked = true;
+    if (!playerName) els['player-name'].focus();
+    else if (input) input.focus();
   }
 
   function focusFirstEnemyCell() {
