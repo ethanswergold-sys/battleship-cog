@@ -390,6 +390,57 @@ body.phase-placing #enemy-wrap { opacity: 0.55; }
   .rank-insignia { width: 2.6rem; height: 2.6rem; }
 }
 
+/* ---------- Phone battle layout ----------
+   An upright phone can't show both boards at full size, so during a battle
+   MacArthur's board (the one you tap) stays full width and your fleet
+   shrinks to a small board beside the bridge readout and the shot box. */
+@media (max-width: 600px) {
+  body.phase-playing main, body.phase-over main {
+    display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr); align-items: start; gap: 0.45rem;
+    grid-template-areas: "enemy enemy" "player status" "player fire" "legend legend" "log log";
+  }
+  body.phase-playing .boards, body.phase-over .boards { display: contents; }
+  body.phase-playing #enemy-wrap, body.phase-over #enemy-wrap { grid-area: enemy; padding: 0.4rem; }
+  body.phase-playing #player-wrap, body.phase-over #player-wrap { grid-area: player; padding: 0.4rem 0.3rem; }
+  body.phase-playing .status, body.phase-over .status {
+    grid-area: status; margin: 0; min-height: 0; padding: 0.4rem 0.5rem 0.4rem 0.8rem;
+  }
+  body.phase-playing .prompt, body.phase-over .prompt { font-size: 0.95rem; letter-spacing: 0.04em; }
+  body.phase-playing .last-shot, body.phase-over .last-shot { font-size: 0.82rem; line-height: 1.25; }
+  #fire-panel, #end-panel { grid-area: fire; margin: 0; padding: 0.5rem; }
+  #shot-help { display: none; }
+  .shot-form { gap: 0.35rem; }
+  .shot-form input { flex: 1 1 3.5rem; width: 3.5rem; min-width: 0; font-size: 1.1rem; padding: 0.35rem 0.3rem; }
+  .shot-form button { flex: none; padding: 0.45rem 0.8rem; }
+  .end-panel h2 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+  .end-panel .controls { gap: 0.35rem; }
+  .end-panel .controls button { flex: 1 1 100%; font-size: 0.9rem; padding: 0.4rem 0.5rem; }
+  body.phase-playing .board-wrap h2, body.phase-over .board-wrap h2 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+  body.phase-playing #player-wrap h2, body.phase-over #player-wrap h2 { font-size: 0.75rem; letter-spacing: 0.06em; }
+  body.phase-playing #player-board .board th, body.phase-playing #player-board .board thead td,
+  body.phase-over #player-board .board th, body.phase-over #player-board .board thead td { font-size: 0.55rem; padding: 0; }
+  body.phase-playing .fleet-status, body.phase-over .fleet-status { margin-top: 0.35rem; gap: 0.25rem; }
+  body.phase-playing .fleet-status li, body.phase-over .fleet-status li { font-size: 0.78rem; padding: 0 0.35rem; }
+  /* The small board already shows which of your ships are sunk; the list stays for screen readers. */
+  body.phase-playing #player-fleet, body.phase-over #player-fleet, .shot-form label {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  body.phase-playing .legend, body.phase-over .legend { grid-area: legend; margin: 0.3rem 0; font-size: 0.85rem; }
+  body.phase-playing .log-wrap, body.phase-over .log-wrap { grid-area: log; }
+  /* Short screens (or a browser toolbar) shrink MacArthur's board just enough to keep your fleet in view. */
+  body.phase-playing #enemy-board .board, body.phase-over #enemy-board .board { max-width: max(270px, min(470px, 100svh - 330px)); }
+  body.phase-playing .site-header, body.phase-over .site-header { padding: 0.4rem 0.5rem 0.3rem; gap: 0.3rem 0.6rem; }
+  body.phase-playing .emblem, body.phase-over .emblem { width: 30px; height: 30px; }
+  body.phase-playing .brand, body.phase-over .brand { gap: 0.45rem; }
+  body.phase-playing .site-header .title, body.phase-over .site-header .title { font-size: 1.35rem; }
+  body.phase-playing .site-header h1, body.phase-over .site-header h1 { flex-direction: row; align-items: baseline; gap: 0.45rem; }
+  body.phase-playing .site-header .vs, body.phase-over .site-header .vs { font-size: 0.7rem; margin-top: 0; letter-spacing: 0.12em; }
+  body.phase-playing .header-controls, body.phase-over .header-controls { gap: 0.3rem 0.6rem; }
+  body.phase-playing .rank-badge, body.phase-over .rank-badge { font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+  body.phase-playing #new-game, body.phase-over #new-game { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+  body.phase-playing .tally, body.phase-over .tally { font-size: 0.8rem; }
+}
+
 /* ---------- Motion ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .peg { animation: drop 180ms ease-out; }
