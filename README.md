@@ -33,6 +33,7 @@ GitHub Pages: Settings → Pages → deploy from the `main` branch, root folder.
 | File | What it does |
 |---|---|
 | `index.html` | The page: both boards, controls and messages. |
+| `favicon.svg` | The little anchor picture that shows on the browser tab and in bookmarks. |
 | `css/styles.css` | Look and layout for phones and laptops. |
 | `fonts/` | The two lettering styles used on the page (the stencil title and the condensed labels), stored here so the game looks right even offline. Both are free to use under the licence files in the same folder. |
 | `js/ui.js` | Draws the screen and handles clicks, taps and keys. Makes no rule decisions. |
