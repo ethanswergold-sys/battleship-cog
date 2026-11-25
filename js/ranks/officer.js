@@ -1,23 +1,27 @@
 /*
- * MacArthur, the computer opponent. Hunt-and-target strategy:
- *   Hunt:   fire at random untried squares in a checkerboard pattern (every
- *           ship is at least 2 long, so each one covers a checkerboard square).
- *   Target: after a hit, try the squares above, below, left and right; once a
- *           ship has two hits, keep firing along that line until it sinks.
- * MacArthur never sees the player's board. It only learns what a human
- * opponent would be told: miss, hit (with ship name) or sunk.
+ * OFFICER: how this rank plays (hunt and target).
+ *   Hunt:   while no ship is wounded, fire at untried squares in a checkerboard
+ *           pattern. Every ship is at least 2 long, so each one covers at least
+ *           one checkerboard square and none can hide in the gaps.
+ *   Target: after a hit, try the squares directly above, below, left and right.
+ *           Once two hits on the same ship line up, keep firing along that line
+ *           in both directions until the ship sinks.
+ *   After a sink: go back to hunting, unless there are hits on a ship that
+ *           hasn't sunk yet (a second ship was clipped). Finish those first.
+ * The Officer never fires at the same square twice or off the board, and never
+ * sees the player's board: it only learns miss, hit (with ship name) or sunk.
  * No screen code lives here.
  */
 (function (root) {
   'use strict';
 
   var rules = (typeof module === 'object' && module.exports)
-    ? require('./rules.js')
+    ? require('../rules.js')
     : root.Battleship.rules;
   var SIZE = rules.SIZE;
   var DIRECTIONS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
-  function createComputer(rng) {
+  function createNotes(rng) {
     var known = [];
     for (var r = 0; r < SIZE; r++) known.push(new Array(SIZE).fill(null));
     return {
@@ -150,8 +154,26 @@
     }
   }
 
+  // The shared opponent interface (see js/opponents.js).
+  function create(rng) {
+    rng = rng || Math.random;
+    var ai = createNotes(rng);
+    return {
+      rank: 'officer',
+      placeShips: function (board) { rules.placeFleetRandomly(board, rng); },
+      chooseShot: function () { return chooseShot(ai); },
+      recordResult: function (row, col, outcome) { recordResult(ai, row, col, outcome); },
+      reset: function () { ai = createNotes(rng); },
+      mode: function () { return mode(ai); },
+      notes: function () { return ai; }
+    };
+  }
+
   var api = {
-    createComputer: createComputer,
+    id: 'officer',
+    label: 'Officer',
+    create: create,
+    createNotes: createNotes,
     chooseShot: chooseShot,
     recordResult: recordResult,
     mode: mode
@@ -161,6 +183,7 @@
     module.exports = api;
   } else {
     root.Battleship = root.Battleship || {};
-    root.Battleship.computer = api;
+    root.Battleship.ranks = root.Battleship.ranks || {};
+    root.Battleship.ranks.officer = api;
   }
 })(typeof window !== 'undefined' ? window : globalThis);
