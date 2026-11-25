@@ -1,6 +1,8 @@
 /*
  * Starts the game and connects the rules (js/rules.js) and MacArthur
- * (js/opponents.js, at whichever rank is chosen) to the screen (js/ui.js).
+ * (js/opponents.js, at the rank chosen in the rank picker) to the screen (js/ui.js).
+ * Every battle begins at the picker; the rank is fixed until the battle ends
+ * or the player presses New game.
  * Optional address-bar settings for testing: ?seed=123 makes every random
  * choice repeatable, ?fast makes MacArthur fire without the usual pause.
  */
@@ -12,7 +14,6 @@
   var ui = root.Battleship.ui;
   var NAME = rules.COMPUTER_NAME;
   var TALLY_KEY = 'battleship-cog-tally';
-  var RANK_KEY = 'battleship-cog-rank';
 
   var params = new URLSearchParams(root.location.search);
   var rng = params.has('seed') ? rules.createRng(Number(params.get('seed'))) : Math.random;
@@ -20,7 +21,9 @@
 
   var state = {
     game: null,
-    rank: loadRank(),
+    picking: true,
+    rank: opponents.DEFAULT_RANK,
+    rankLabel: opponents.find(opponents.DEFAULT_RANK).label,
     opponent: null,
     computerShots: [],
     orientation: rules.HORIZONTAL,
@@ -43,31 +46,6 @@
       if (saved && typeof saved.wins === 'number' && typeof saved.losses === 'number') return saved;
     } catch (e) { /* storage unavailable: keep the tally in memory only */ }
     return { wins: 0, losses: 0 };
-  }
-
-  // The chosen rank is remembered the same way as the tally.
-  function loadRank() {
-    try {
-      var saved = root.sessionStorage.getItem(RANK_KEY);
-      if (opponents.find(saved)) return saved;
-    } catch (e) { /* storage unavailable */ }
-    return opponents.DEFAULT_RANK;
-  }
-
-  function saveRank() {
-    try { root.sessionStorage.setItem(RANK_KEY, state.rank); } catch (e) { /* ignore */ }
-  }
-
-  // Switching rank mid-game: the new rank takes over from MacArthur's next
-  // shot and is told every shot fired so far, so it never repeats a square.
-  function changeRank(id) {
-    var rank = opponents.find(id);
-    if (!rank || id === state.rank) return;
-    state.rank = id;
-    saveRank();
-    state.opponent = opponents.createOpponent(id, rng, state.computerShots);
-    ui.announce(NAME + ' now plays at the rank of ' + rank.label + '.');
-    render();
   }
 
   function saveTally() {
@@ -93,11 +71,17 @@
     return 'Place your ' + state.selected + ' (' + size + ' squares, ' + dir + ').';
   }
 
-  function newGame() {
+  // Wipes both boards and MacArthur's memory: a brand-new battle at state.rank.
+  function resetBattle() {
     clearTimeout(computerTimer);
-    state.opponent = opponents.createOpponent(state.rank, rng);
-    state.computerShots = [];
-    state.game = rules.createGame(rng, state.opponent.placeShips);
+    ui.hideEndScreen();
+    ui.clearShotInput();
+    var battle = opponents.newBattle(state.rank, rng);
+    state.rank = battle.rank;
+    state.rankLabel = opponents.find(battle.rank).label;
+    state.opponent = battle.opponent;
+    state.computerShots = battle.computerShots;
+    state.game = battle.game;
     state.orientation = rules.HORIZONTAL;
     state.selected = firstUnplaced();
     state.revealed = false;
@@ -105,8 +89,33 @@
     state.lastPlayer = '';
     state.lastComputer = '';
     state.typedShot = false;
-    say(placingPrompt(), 'New game. ' + placingPrompt());
+  }
+
+  function newGame(intro) {
+    resetBattle();
+    say(placingPrompt(), (intro || 'New game.') + ' ' + placingPrompt());
     render();
+  }
+
+  // ----- Choosing a rank -----
+
+  // New game and Change rank both come here: the battle is reset at once, so
+  // nothing from the previous game carries over, and the Officer is preselected.
+  function showPicker() {
+    resetBattle();
+    state.picking = true;
+    say('Choose your opponent.', 'Choose your opponent: Rookie, Officer or General. ' +
+      'Use the arrow keys to pick, then press Enter.');
+    render();
+    ui.showPicker(opponents.DEFAULT_RANK);
+  }
+
+  function chooseRank(id) {
+    if (!state.picking || !opponents.find(id)) return;
+    state.rank = id;
+    state.picking = false;
+    newGame(NAME + ' plays at the rank of ' + opponents.find(id).label + '.');
+    ui.focusElement('randomize');
   }
 
   // ----- Placing ships -----
@@ -303,15 +312,17 @@
   }
 
   function playAgain() {
-    ui.hideEndScreen();
-    newGame();
+    newGame('New game against ' + NAME + ' at the rank of ' + state.rankLabel + '.');
     ui.focusElement('randomize');
   }
 
   ui.init({
     ranks: opponents.list(),
-    changeRank: changeRank,
+    chooseRank: chooseRank,
+    newGame: showPicker,
+    changeRank: showPicker,
     cellActivated: function (which, row, col) {
+      if (state.picking) return;
       if (which === 'player' && state.game.phase === 'placing') placeAt(row, col);
       else if (which === 'enemy') { state.typedShot = false; fireAt(row, col); }
     },
@@ -325,5 +336,5 @@
     playAgain: playAgain
   });
 
-  newGame();
+  showPicker();
 })(window);

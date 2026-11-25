@@ -7,13 +7,12 @@
   <title>Battleship vs. MacArthur</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="phase-placing">
+<body class="phase-choosing">
   <header class="site-header">
     <h1>Battleship <span class="vs">vs. MacArthur</span></h1>
     <div class="header-controls">
-      <label class="rank-picker" for="rank">Opponent rank
-        <select id="rank"></select>
-      </label>
+      <p class="rank-badge" id="rank-badge" hidden></p>
+      <button type="button" id="new-game" hidden>New game</button>
       <p class="tally" id="tally">Wins 0 · Losses 0</p>
     </div>
   </header>
@@ -26,6 +25,20 @@
       <p id="prompt" class="prompt"></p>
       <p id="last-player" class="last-shot"></p>
       <p id="last-computer" class="last-shot"></p>
+    </section>
+
+    <section id="rank-panel" class="panel rank-panel" aria-labelledby="rank-heading" hidden>
+      <h2 id="rank-heading" tabindex="-1">Choose your opponent</h2>
+      <form id="rank-form">
+        <fieldset class="rank-options">
+          <legend class="help">MacArthur can play at three ranks. Pick one with the mouse, a tap or the
+            arrow keys, then press <strong>Start battle</strong>.</legend>
+          <div id="rank-choices"></div>
+        </fieldset>
+        <div class="controls">
+          <button type="submit" id="choose-rank" class="primary">Start battle</button>
+        </div>
+      </form>
     </section>
 
     <section id="placement" class="panel" aria-labelledby="placement-heading">
@@ -65,6 +78,7 @@
       <div class="controls">
         <button type="button" id="reveal-inline">Reveal MacArthur's ships</button>
         <button type="button" id="play-again-inline" class="primary">Play again</button>
+        <button type="button" id="change-rank-inline">Change rank</button>
       </div>
     </section>
 
@@ -94,14 +108,16 @@
     </section>
   </main>
 
-  <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title" aria-describedby="end-last end-text">
+  <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title" aria-describedby="end-last end-text end-rank">
     <h2 id="end-title"></h2>
     <p id="end-last"></p>
     <p id="end-text"></p>
+    <p id="end-rank"></p>
     <p id="end-tally" class="tally"></p>
     <div class="controls">
       <button type="button" id="reveal">Reveal MacArthur's ships</button>
       <button type="button" id="play-again" class="primary">Play again</button>
+      <button type="button" id="change-rank">Change rank</button>
     </div>
   </dialog>
 
