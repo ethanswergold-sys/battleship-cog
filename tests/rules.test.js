@@ -393,4 +393,18 @@
     assert.equal(rules.shotMessage('computer', 0, 9, { result: 'sunk', shipName: 'Battleship' }),
       'MacArthur fires at A10: Hit! MacArthur sank your Battleship!');
   });
+
+  test('the player\'s name is tidied up and kept to 20 characters', function () {
+    assert.equal(rules.cleanPlayerName('  Ethan  '), 'Ethan');
+    assert.equal(rules.cleanPlayerName('Admiral   Grace\tHopper'), 'Admiral Grace Hopper');
+    assert.equal(rules.cleanPlayerName('A very long name that goes on'), 'A very long name tha');
+    assert.equal(rules.cleanPlayerName('   '), '');
+    assert.equal(rules.cleanPlayerName(null), '');
+    assert.equal(rules.cleanPlayerName('Zo\u00eb \ud83d\udea2'), 'Zo\u00eb \ud83d\udea2');
+  });
+
+  test('possessive names read naturally', function () {
+    assert.equal(rules.possessive('Ethan'), 'Ethan\u2019s');
+    assert.equal(rules.possessive('You'), 'Your');
+  });
 })();

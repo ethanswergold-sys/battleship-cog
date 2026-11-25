@@ -7,7 +7,8 @@ so it runs on GitHub Pages straight from the repo root, or by double-clicking
 
 ## How to play
 
-1. **Choose your opponent:** before each battle, pick MacArthur's rank: *Rookie* fires at random,
+1. **Choose your opponent:** before each battle, type your name if you like (it appears on your board and
+   in the shot history, and is kept until you close the window), then pick MacArthur's rank: *Rookie* fires at random,
    *Officer* (picked to start with) hunts and then targets, *General* works out where ships are most
    likely to be. The rank is shown at the top during the battle and can't change mid-battle.
 2. **Place your fleet:** pick a ship and click (or tap) a square on *Your fleet*. Turn ships with the
