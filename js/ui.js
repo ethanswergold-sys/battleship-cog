@@ -17,6 +17,17 @@
 
   function byId(id) { return document.getElementById(id); }
 
+  // Rank insignia for the picker: one chevron, captain's bars, three stars.
+  var STAR = 'M0,-9 L2.6,-3.2 L8.6,-2.8 L4,1.2 L5.4,7.4 L0,4 L-5.4,7.4 L-4,1.2 L-8.6,-2.8 L-2.6,-3.2Z';
+  var INSIGNIA = {
+    rookie: '<path d="M8 15 L24 27 L40 15" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>',
+    officer: '<rect x="13" y="8" width="8" height="32" rx="1.5" fill="currentColor"/>' +
+      '<rect x="27" y="8" width="8" height="32" rx="1.5" fill="currentColor"/>',
+    general: '<path transform="translate(24 14)" d="' + STAR + '" fill="currentColor"/>' +
+      '<path transform="translate(12 33)" d="' + STAR + '" fill="currentColor"/>' +
+      '<path transform="translate(36 33)" d="' + STAR + '" fill="currentColor"/>'
+  };
+
   function buildBoard(container, which, caption) {
     var table = document.createElement('table');
     table.className = 'board';
@@ -153,7 +164,12 @@
       desc.className = 'rank-desc';
       desc.id = 'rank-desc-' + rank.id;
       desc.textContent = rank.description;
+      var badge = document.createElement('span');
+      badge.className = 'rank-insignia';
+      badge.setAttribute('aria-hidden', 'true');
+      badge.innerHTML = '<svg viewBox="0 0 48 48" focusable="false">' + (INSIGNIA[rank.id] || '') + '</svg>';
       label.appendChild(input);
+      label.appendChild(badge);
       label.appendChild(name);
       label.appendChild(desc);
       els['rank-choices'].appendChild(label);
@@ -229,6 +245,18 @@
     btn.innerHTML = shot ? '<span class="peg ' + shot + '" aria-hidden="true"></span>' : '';
   }
 
+  // Which part of a ship this square is, so the CSS can draw one long hull:
+  // a pointed bow at the first square and a squared-off stern at the last.
+  function hullClasses(ship, r, c) {
+    var cells = ship.cells;
+    var across = cells.length > 1 && cells[0].row === cells[1].row;
+    var list = [across ? 'hull-h' : 'hull-v'];
+    if (cells[0].row === r && cells[0].col === c) list.push('bow');
+    var last = cells[cells.length - 1];
+    if (last.row === r && last.col === c) list.push('stern');
+    return list;
+  }
+
   function shipCellLabel(ship, shot) {
     var label = 'your ' + ship.name;
     if (shot === 'hit') label += rules.isSunk(ship) ? ', sunk' : ', hit';
@@ -245,6 +273,7 @@
     var label;
     if (ship) {
       classes.push(shot === 'hit' && rules.isSunk(ship) ? 'sunk' : 'ship');
+      classes = classes.concat(hullClasses(ship, r, c));
       label = shipCellLabel(ship, shot);
     } else {
       label = shot === 'miss' ? 'MacArthur missed' : 'water';
@@ -264,12 +293,17 @@
     var label = 'not fired at';
     var ship = rules.shipAt(board, r, c);
     if (shot === 'hit') {
-      if (rules.isSunk(ship)) { classes.push('sunk'); label = 'hit, ' + ship.name + ', sunk'; }
+      if (rules.isSunk(ship)) {
+        classes.push('sunk');
+        classes = classes.concat(hullClasses(ship, r, c));
+        label = 'hit, ' + ship.name + ', sunk';
+      }
       else label = 'hit, ' + ship.name;
     } else if (shot === 'miss') {
       label = 'miss';
     } else if (state.revealed && ship) {
       classes.push('revealed');
+      classes = classes.concat(hullClasses(ship, r, c));
       label = 'MacArthur\'s ' + ship.name + ', not found';
     }
     var canFire = state.game.phase === 'playing' && state.game.turn === 'player' && !shot;
@@ -413,6 +447,7 @@
     els['end-tally'].textContent = 'Wins ' + state.tally.wins + ' \u00b7 Losses ' + state.tally.losses;
     els.reveal.hidden = !lost;
     var dialog = els['end-dialog'];
+    dialog.dataset.outcome = lost ? 'defeat' : 'victory';
     if (typeof dialog.showModal === 'function') {
       if (!dialog.open) dialog.showModal();
     } else {

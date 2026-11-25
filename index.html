@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Classic Battleship in your browser: you against MacArthur, the computer.">
   <title>Battleship vs. MacArthur</title>
+  <meta name="theme-color" content="#071c33">
+  <link rel="preload" href="fonts/black-ops-one.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="phase-choosing">
   <header class="site-header">
-    <h1>Battleship <span class="vs" id="vs-line">vs. MacArthur</span></h1>
+    <div class="brand">
+      <svg class="emblem" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="30" fill="#0b2a4a" stroke="#e8b03f" stroke-width="3"/>
+        <circle cx="32" cy="32" r="25.5" fill="none" stroke="#e8b03f" stroke-width="1.5" stroke-dasharray="2.2 2.2"/>
+        <g fill="none" stroke="#f4f7fb" stroke-width="3.2" stroke-linecap="round">
+          <circle cx="32" cy="17" r="3.6"/>
+          <path d="M32 21 V48"/>
+          <path d="M24 27 H40"/>
+          <path d="M18 38 C20 46 26 49 32 49 C38 49 44 46 46 38"/>
+        </g>
+        <path d="M15 37 L21 36 L19 41Z M49 37 L43 36 L45 41Z" fill="#f4f7fb"/>
+      </svg>
+      <h1><span class="title">Battleship</span> <span class="vs" id="vs-line">vs. MacArthur</span></h1>
+    </div>
     <div class="header-controls">
       <p class="rank-badge" id="rank-badge" hidden></p>
       <button type="button" id="new-game" hidden>New game</button>

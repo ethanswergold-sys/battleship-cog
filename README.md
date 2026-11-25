@@ -34,6 +34,7 @@ GitHub Pages: Settings → Pages → deploy from the `main` branch, root folder.
 |---|---|
 | `index.html` | The page: both boards, controls and messages. |
 | `css/styles.css` | Look and layout for phones and laptops. |
+| `fonts/` | The two lettering styles used on the page (the stencil title and the condensed labels), stored here so the game looks right even offline. Both are free to use under the licence files in the same folder. |
 | `js/ui.js` | Draws the screen and handles clicks, taps and keys. Makes no rule decisions. |
 | `js/main.js` | Starts the game and connects the rules and MacArthur to the screen. |
 | `js/rules.js` | The game rules: placing ships, firing shots, hits, misses, sinking, turns, winning. No screen code. |
