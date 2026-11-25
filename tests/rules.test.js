@@ -407,4 +407,150 @@
     assert.equal(rules.possessive('Ethan'), 'Ethan\u2019s');
     assert.equal(rules.possessive('You'), 'Your');
   });
+
+  // ----- Edges of the board: the last row (J) and last column (10) -----
+
+  test('ships can lie along the last row and the last column', function () {
+    var board = rules.createBoard();
+    assert.ok(rules.placeShip(board, 'Carrier', 9, 5, H).ok, 'Carrier J6-J10');
+    assert.ok(rules.placeShip(board, 'Battleship', 0, 9, V).ok, 'Battleship A10-D10');
+    assert.ok(rules.placeShip(board, 'Cruiser', 9, 0, H).ok, 'Cruiser J1-J3');
+    assert.ok(rules.placeShip(board, 'Submarine', 4, 9, V).ok, 'Submarine E10-G10');
+    assert.equal(shipsAt(board, 9, 9), 1, 'J10 is covered');
+  });
+
+  test('a ship cannot run past the last row or the last column', function () {
+    var board = rules.createBoard();
+    assert.equal(rules.placeShip(board, 'Carrier', 9, 6, H).reason, 'off-board', 'Carrier J7 across');
+    assert.equal(rules.placeShip(board, 'Carrier', 6, 9, V).reason, 'off-board', 'Carrier G10 down');
+    assert.equal(rules.placeShip(board, 'Destroyer', 9, 9, H).reason, 'off-board', 'Destroyer J10 across');
+    assert.equal(rules.placeShip(board, 'Destroyer', 9, 9, V).reason, 'off-board', 'Destroyer J10 down');
+    assert.equal(rules.placeShip(board, 'Destroyer', 9, 0, V).reason, 'off-board', 'Destroyer J1 down');
+    assert.equal(rules.placeShip(board, 'Destroyer', 0, 9, H).reason, 'off-board', 'Destroyer A10 across');
+    assert.equal(board.ships.length, 0, 'nothing was placed');
+  });
+
+  test('ships cannot overlap on the last row or the last column', function () {
+    var board = rules.createBoard();
+    rules.placeShip(board, 'Carrier', 9, 5, H);
+    rules.placeShip(board, 'Battleship', 0, 9, V);
+    assert.equal(rules.placeShip(board, 'Cruiser', 7, 9, V).reason, 'overlap', 'crosses J10');
+    assert.equal(rules.placeShip(board, 'Submarine', 3, 7, H).reason, 'overlap', 'crosses D10');
+    assert.equal(rules.placeShip(board, 'Destroyer', 8, 5, V).reason, 'overlap', 'crosses J6');
+    assert.equal(board.ships.length, 2);
+  });
+
+  test('every legal and illegal spot for every ship is judged correctly', function () {
+    rules.FLEET.forEach(function (entry) {
+      [H, V].forEach(function (dir) {
+        for (var row = 0; row < 10; row++) {
+          for (var col = 0; col < 10; col++) {
+            var board = rules.createBoard();
+            var end = (dir === H ? col : row) + entry.size - 1;
+            var result = rules.placeShip(board, entry.name, row, col, dir);
+            assert.equal(result.ok, end <= 9, entry.name + ' at ' + rules.formatCoordinate(row, col) + ' ' + dir);
+          }
+        }
+      });
+    });
+  });
+
+  test('random fleets use the last row and last column too (500 boards)', function () {
+    var rng = rules.createRng(99);
+    var lastRow = false, lastCol = false;
+    for (var i = 0; i < 500; i++) {
+      var board = rules.createBoard();
+      rules.placeFleetRandomly(board, rng);
+      for (var k = 0; k < 10; k++) {
+        if (shipsAt(board, 9, k)) lastRow = true;
+        if (shipsAt(board, k, 9)) lastCol = true;
+      }
+    }
+    assert.ok(lastRow && lastCol);
+  });
+
+  // ----- Firing through a real game -----
+
+  test('in a game, a miss, a hit and a sink are each reported and each pass the turn', function () {
+    var game = readyGame(); // player's fleet is in rows A, C, E, G, I from column 1
+    var destroyer = game.enemy.ships.filter(function (s) { return s.name === 'Destroyer'; })[0];
+    var water = null;
+    for (var r = 0; r < 10 && !water; r++) {
+      for (var c = 0; c < 10 && !water; c++) {
+        if (!rules.shipAt(game.enemy, r, c)) water = { row: r, col: c };
+      }
+    }
+    game.turn = 'player';
+    assert.equal(rules.playerFire(game, water.row, water.col).result, 'miss');
+    assert.equal(game.turn, 'computer', 'a miss passes the turn');
+    assert.equal(rules.computerFire(game, 0, 0).result, 'hit', 'MacArthur hits the Carrier at A1');
+    assert.equal(game.turn, 'player', 'a hit passes the turn too');
+    assert.equal(rules.playerFire(game, destroyer.cells[0].row, destroyer.cells[0].col).result, 'hit');
+    rules.computerFire(game, 9, 9);
+    var sunk = rules.playerFire(game, destroyer.cells[1].row, destroyer.cells[1].col);
+    assert.equal(sunk.result, 'sunk');
+    assert.equal(sunk.shipName, 'Destroyer');
+    assert.equal(game.turn, 'computer', 'a sink passes the turn too');
+    assert.equal(game.phase, 'playing');
+  });
+
+  test('re-firing at a tried square is rejected for both sides and keeps the same shooter', function () {
+    var game = readyGame();
+    game.turn = 'player';
+    rules.playerFire(game, 4, 4);
+    rules.computerFire(game, 0, 0);
+    assert.equal(rules.playerFire(game, 4, 4).result, 'repeat');
+    assert.equal(game.turn, 'player', 'the player still has the turn');
+    rules.playerFire(game, 4, 5);
+    assert.equal(rules.computerFire(game, 0, 0).result, 'repeat');
+    assert.equal(game.turn, 'computer', 'MacArthur still has the turn');
+    assert.equal(game.player.ships[0].hits, 1, 'the repeat did not add a hit');
+  });
+
+  // ----- Winning happens on exactly the last ship square -----
+
+  test('the game ends exactly when the last ship square is hit, not before', function () {
+    [1, 2, 3, 4, 5].forEach(function (seed) {
+      var game = rules.createGame(rules.createRng(seed));
+      placeFleetInRows(game.player);
+      rules.startGame(game, rules.createRng(seed + 10));
+      var cells = [];
+      game.enemy.ships.forEach(function (s) { cells = cells.concat(s.cells); });
+      assert.equal(cells.length, 17, 'the fleet covers 17 squares');
+      var computerShot = 0;
+      cells.forEach(function (cell, i) {
+        if (game.turn === 'computer') {
+          var n = computerShot++; // rows B, D, F, H, J are empty on the player's board: always a miss
+          assert.equal(rules.computerFire(game, 1 + 2 * Math.floor(n / 10), n % 10).result, 'miss');
+        }
+        var outcome = rules.playerFire(game, cell.row, cell.col);
+        var isLast = i === cells.length - 1;
+        assert.equal(Boolean(outcome.allSunk), isLast, 'all sunk only on the last square (' + (i + 1) + ' of 17)');
+        assert.equal(game.phase, isLast ? 'over' : 'playing');
+        assert.equal(game.winner, isLast ? 'player' : null);
+      });
+    });
+  });
+
+  test('MacArthur also wins on exactly the last square of the player\'s fleet', function () {
+    var game = readyGame();
+    var cells = [];
+    game.player.ships.forEach(function (s) { cells = cells.concat(s.cells); });
+    var emptyEnemy = [];
+    for (var r = 0; r < 10; r++) {
+      for (var k = 0; k < 10; k++) if (!rules.shipAt(game.enemy, r, k)) emptyEnemy.push({ row: r, col: k });
+    }
+    cells.forEach(function (cell, i) {
+      if (game.turn === 'player') {
+        var w = emptyEnemy.shift();
+        rules.playerFire(game, w.row, w.col);
+      }
+      var outcome = rules.computerFire(game, cell.row, cell.col);
+      var isLast = i === cells.length - 1;
+      assert.equal(Boolean(outcome.allSunk), isLast);
+      assert.equal(game.phase, isLast ? 'over' : 'playing');
+    });
+    assert.equal(game.winner, 'computer');
+    assert.deepEqual(rules.playerFire(game, 0, 0), { result: 'not-playing' }, 'no shots after the game ends');
+  });
 })();
