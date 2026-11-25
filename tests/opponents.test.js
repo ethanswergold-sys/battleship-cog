@@ -210,10 +210,11 @@
     return total / games;
   }
 
-  test('ranks are listed weakest first, starting with the Rookie', function () {
-    assert.deepEqual(opponents.list(), [{ id: 'rookie', label: 'Rookie' }, { id: 'officer', label: 'Officer' }]);
+  test('ranks are listed weakest first: Rookie, Officer, General', function () {
+    assert.deepEqual(opponents.list(), [
+      { id: 'rookie', label: 'Rookie' }, { id: 'officer', label: 'Officer' }, { id: 'general', label: 'General' }
+    ]);
     assert.equal(opponents.DEFAULT_RANK, 'rookie');
-    assert.equal(opponents.find('general'), null, 'the General is not built yet');
   });
 
   test('every rank has the same four actions', function () {
@@ -267,8 +268,9 @@
   });
 
   test('a rank switched in mid-game never repeats a square already fired at', function () {
-    ['rookie', 'officer'].forEach(function (first) {
-      var second = first === 'rookie' ? 'officer' : 'rookie';
+    [['rookie', 'officer'], ['officer', 'rookie'], ['rookie', 'general'], ['officer', 'general'], ['general', 'rookie']].forEach(function (pair) {
+      var first = pair[0];
+      var second = pair[1];
       var rng = rules.createRng(6);
       var board = rules.createBoard();
       rules.placeFleetRandomly(board, rng);
@@ -353,14 +355,105 @@
 
   // ----- Both ranks over many games -----
 
-  test('neither rank repeats a shot or fires off the board (1,000 games each)', function () {
-    ['rookie', 'officer'].forEach(function (id) { averageShots(id, 1000, 2026); });
+  test('no rank repeats a shot or fires off the board (1,000 games each)', function () {
+    ['rookie', 'officer', 'general'].forEach(function (id) { averageShots(id, 1000, 2026); });
   });
 
-  test('the Officer averages clearly fewer shots than the Rookie', function () {
+  test('each rank averages fewer shots than the one below it', function () {
     var rookie = averageShots('rookie', 500, 11);
     var officerAvg = averageShots('officer', 500, 11);
+    var general = averageShots('general', 500, 11);
     assert.ok(officerAvg < rookie - 25, 'Officer ' + officerAvg.toFixed(1) + ' vs Rookie ' + rookie.toFixed(1));
+    assert.ok(general < officerAvg - 3, 'General ' + general.toFixed(1) + ' vs Officer ' + officerAvg.toFixed(1));
+  });
+
+  // ----- General -----
+
+  var general = isNode ? require('../js/ranks/general.js') : window.Battleship.ranks.general;
+
+  test('General: on an empty board, the middle scores higher than the corners', function () {
+    var scores = general.scoreMap(general.createNotes(rules.createRng(1)));
+    assert.ok(scores[4][4] > scores[0][0] && scores[5][5] > scores[9][9]);
+    assert.equal(scores[0][0], scores[9][9], 'the map is symmetrical');
+  });
+
+  test('General: fires at a highest-scoring square, breaking ties at random', function () {
+    var picks = {};
+    for (var seed = 1; seed <= 40; seed++) {
+      var ai = general.createNotes(rules.createRng(seed));
+      var scores = general.scoreMap(ai);
+      var best = Math.max.apply(null, scores.map(function (row) { return Math.max.apply(null, row); }));
+      var shot = general.chooseShot(ai);
+      assert.equal(scores[shot.row][shot.col], best);
+      picks[shot.row + ',' + shot.col] = true;
+    }
+    assert.ok(Object.keys(picks).length > 1, 'not always the same opening square');
+  });
+
+  test('General: no ship can lie across a miss or a sunk ship', function () {
+    var ai = general.createNotes(rules.createRng(2));
+    // Misses all around A1 leave no room for any ship there.
+    general.recordResult(ai, 0, 1, { result: 'miss' });
+    general.recordResult(ai, 1, 0, { result: 'miss' });
+    assert.equal(general.scoreMap(ai)[0][0], 0);
+    // A sunk Destroyer at A2-A3 and a miss at B1 also leave no room at A1.
+    var ai2 = general.createNotes(rules.createRng(3));
+    general.recordResult(ai2, 0, 1, { result: 'hit', shipName: 'Destroyer' });
+    general.recordResult(ai2, 0, 2, { result: 'sunk', shipName: 'Destroyer' });
+    general.recordResult(ai2, 1, 0, { result: 'miss' });
+    assert.equal(general.scoreMap(ai2)[0][0], 0);
+    assert.equal(general.mode(ai2), 'hunt');
+  });
+
+  test('General: after a hit, it fires next to the damaged ship', function () {
+    for (var seed = 1; seed <= 20; seed++) {
+      var ai = general.createNotes(rules.createRng(seed));
+      general.recordResult(ai, 4, 4, { result: 'hit', shipName: 'Cruiser' });
+      assert.equal(general.mode(ai), 'target');
+      assert.ok(isNeighbor(general.chooseShot(ai), { row: 4, col: 4 }));
+    }
+  });
+
+  test('General: with two hits in a line, it keeps to that line', function () {
+    var ai = general.createNotes(rules.createRng(4));
+    general.recordResult(ai, 2, 7, { result: 'hit', shipName: 'Carrier' });
+    general.recordResult(ai, 3, 7, { result: 'hit', shipName: 'Carrier' });
+    var shot = general.chooseShot(ai);
+    assert.equal(shot.col, 7);
+    assert.ok(shot.row === 1 || shot.row === 4);
+  });
+
+  test('General: fills the gap between two hits on the same ship first', function () {
+    var ai = general.createNotes(rules.createRng(5));
+    general.recordResult(ai, 0, 0, { result: 'hit', shipName: 'Cruiser' });
+    general.recordResult(ai, 0, 2, { result: 'hit', shipName: 'Cruiser' });
+    assert.deepEqual(general.chooseShot(ai), { row: 0, col: 1 });
+  });
+
+  test('General: after sinking one ship it finishes another ship it already hit', function () {
+    var ai = general.createNotes(rules.createRng(6));
+    general.recordResult(ai, 8, 8, { result: 'hit', shipName: 'Submarine' });
+    general.recordResult(ai, 2, 2, { result: 'hit', shipName: 'Destroyer' });
+    general.recordResult(ai, 2, 3, { result: 'sunk', shipName: 'Destroyer' });
+    assert.equal(general.mode(ai), 'target');
+    assert.ok(isNeighbor(general.chooseShot(ai), { row: 8, col: 8 }));
+  });
+
+  test('General: choosing a shot takes well under 100 milliseconds', function () {
+    var rng = rules.createRng(7);
+    var slowest = 0;
+    for (var g = 0; g < 20; g++) {
+      var board = rules.createBoard();
+      rules.placeFleetRandomly(board, rng);
+      var opponent = opponents.createOpponent('general', rng);
+      while (!rules.allSunk(board)) {
+        var start = Date.now();
+        var shot = opponent.chooseShot();
+        slowest = Math.max(slowest, Date.now() - start);
+        opponent.recordResult(shot.row, shot.col, rules.fire(board, shot.row, shot.col));
+      }
+    }
+    assert.ok(slowest < 100, 'slowest shot took ' + slowest + ' ms');
   });
 
   test('the Officer plays a full game through the game rules', function () {
