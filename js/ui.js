@@ -298,7 +298,10 @@
         classes = classes.concat(hullClasses(ship, r, c));
         label = 'hit, ' + ship.name + ', sunk';
       }
-      else label = 'hit, ' + ship.name;
+      else {
+        label = 'hit, ' + ship.name;
+        if (state.revealed) classes = classes.concat(['revealed'], hullClasses(ship, r, c));
+      }
     } else if (shot === 'miss') {
       label = 'miss';
     } else if (state.revealed && ship) {
