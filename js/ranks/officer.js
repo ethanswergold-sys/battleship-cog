@@ -183,7 +183,7 @@
   var api = {
     id: 'officer',
     label: 'Officer',
-    description: 'Searches in a checkerboard pattern and chases every hit until the ship sinks. Medium.',
+    description: 'Get past the waves.',
     create: create,
     createNotes: createNotes,
     chooseShot: chooseShot,

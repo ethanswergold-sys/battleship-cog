@@ -46,7 +46,7 @@
   var api = {
     id: 'rookie',
     label: 'Rookie',
-    description: 'Fires at random squares and never follows up a hit. Easy.',
+    description: 'Find your Sea Legs.',
     create: create
   };
 

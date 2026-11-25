@@ -133,7 +133,7 @@
   var api = {
     id: 'general',
     label: 'General',
-    description: 'Works out where your ships are most likely to be before every shot. Hard.',
+    description: 'Command the open ocean.',
     create: create,
     createNotes: createNotes,
     scoreMap: scoreMap,
