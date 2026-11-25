@@ -295,6 +295,26 @@
     assert.ok(isNeighbor(opponent.chooseShot(), { row: 4, col: 4 }));
   });
 
+  test('an Officer taking over fills the gap between two hits on the same ship first', function () {
+    var board = rules.createBoard();
+    rules.placeShip(board, 'Cruiser', 0, 0, H);
+    var history = [
+      { row: 0, col: 0, outcome: rules.fire(board, 0, 0) },
+      { row: 0, col: 2, outcome: rules.fire(board, 0, 2) }
+    ];
+    var opponent = opponents.createOpponent('officer', rules.createRng(12), history);
+    assert.deepEqual(opponent.chooseShot(), { row: 0, col: 1 });
+    var vertical = rules.createBoard();
+    rules.placeShip(vertical, 'Carrier', 2, 5, rules.VERTICAL);
+    history = [
+      { row: 2, col: 5, outcome: rules.fire(vertical, 2, 5) },
+      { row: 6, col: 5, outcome: rules.fire(vertical, 6, 5) }
+    ];
+    opponent = opponents.createOpponent('officer', rules.createRng(13), history);
+    var shot = opponent.chooseShot();
+    assert.ok(shot.col === 5 && shot.row > 2 && shot.row < 6, JSON.stringify(shot));
+  });
+
   // ----- Rookie -----
 
   test('Rookie: fires at random squares, not a checkerboard', function () {

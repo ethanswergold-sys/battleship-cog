@@ -79,6 +79,17 @@
       });
       var first = line[0];
       var last = line[line.length - 1];
+      // Gaps between hits on the same ship are certain hits (possible when
+      // taking over from a rank that fired at random).
+      var gaps = [];
+      for (var i = 1; i < line.length; i++) {
+        for (var k = (horizontal ? line[i - 1].col : line[i - 1].row) + 1;
+          k < (horizontal ? line[i].col : line[i].row); k++) {
+          var gap = horizontal ? { row: first.row, col: k } : { row: k, col: first.col };
+          if (isUntried(ai, gap.row, gap.col)) gaps.push(gap);
+        }
+      }
+      if (gaps.length) return gaps;
       var ends = horizontal
         ? [{ row: first.row, col: first.col - 1 }, { row: last.row, col: last.col + 1 }]
         : [{ row: first.row - 1, col: first.col }, { row: last.row + 1, col: last.col }];
