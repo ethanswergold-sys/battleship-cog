@@ -40,8 +40,24 @@ h2 { font-size: 1.15rem; margin: 0 0 0.5rem; }
 .site-header .vs { font-weight: 400; color: var(--muted); font-size: 1.1rem; }
 .tally { margin: 0; font-weight: 600; }
 .header-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; }
-.rank-picker { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
-.rank-picker select { font: inherit; min-height: 2.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; }
+.rank-badge {
+  margin: 0; padding: 0.2rem 0.7rem; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 700;
+}
+
+.rank-options { border: 0; margin: 0 0 0.75rem; padding: 0; min-width: 0; }
+.rank-options legend { padding: 0; margin-bottom: 0.5rem; }
+#rank-choices { display: grid; gap: 0.5rem; }
+.rank-option {
+  display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 0.1rem 0.6rem;
+  padding: 0.6rem 0.8rem; border: 2px solid #bcccdc; border-radius: 8px; cursor: pointer;
+}
+.rank-option input { grid-row: span 2; width: 1.3rem; height: 1.3rem; margin: 0.15rem 0 0; accent-color: var(--primary); }
+.rank-option .rank-name { font-weight: 700; font-size: 1.1rem; }
+.rank-option .rank-desc { color: var(--muted); font-size: 0.95rem; }
+.rank-option:has(input:checked) { border-color: var(--primary); background: #e6eef6; }
+.rank-option:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+body.phase-choosing .status, body.phase-choosing .boards,
+body.phase-choosing .legend, body.phase-choosing .log-wrap { display: none; }
 
 button, input { font: inherit; }
 

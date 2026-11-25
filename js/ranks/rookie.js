@@ -43,7 +43,12 @@
     };
   }
 
-  var api = { id: 'rookie', label: 'Rookie', create: create };
+  var api = {
+    id: 'rookie',
+    label: 'Rookie',
+    description: 'Fires at random squares and never follows up a hit. Easy.',
+    create: create
+  };
 
   if (typeof module === 'object' && module.exports) {
     module.exports = api;

@@ -123,10 +123,11 @@
 
   function init(h) {
     handlers = h;
-    ['rank', 'tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
+    ['rank-badge', 'new-game', 'rank-panel', 'rank-heading', 'rank-form', 'rank-choices', 'change-rank',
+      'change-rank-inline', 'tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
       'rotate', 'randomize', 'clear', 'start', 'fire-panel', 'shot-form', 'shot-input', 'fire',
       'end-panel', 'end-panel-heading', 'reveal-inline', 'play-again-inline', 'player-board',
-      'enemy-board', 'player-fleet', 'enemy-fleet', 'log', 'end-dialog', 'end-title', 'end-last', 'end-text',
+      'enemy-board', 'player-fleet', 'enemy-fleet', 'log', 'end-dialog', 'end-title', 'end-last', 'end-text', 'end-rank',
       'end-tally', 'reveal', 'play-again'].forEach(function (id) {
       els[id] = byId(id);
     });
@@ -134,13 +135,45 @@
     buildBoard(els['player-board'], 'player', 'Your fleet. Rows A to J, columns 1 to 10.');
     buildBoard(els['enemy-board'], 'enemy', 'MacArthur\'s waters. Rows A to J, columns 1 to 10.');
 
+    // One radio button per rank: arrow keys move between them, the label makes
+    // the whole card clickable, and Enter (or Start battle) confirms.
     h.ranks.forEach(function (rank) {
-      var option = document.createElement('option');
-      option.value = rank.id;
-      option.textContent = rank.label;
-      els.rank.appendChild(option);
+      var label = document.createElement('label');
+      label.className = 'rank-option';
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'rank';
+      input.value = rank.id;
+      input.id = 'rank-' + rank.id;
+      input.setAttribute('aria-describedby', 'rank-desc-' + rank.id);
+      var name = document.createElement('span');
+      name.className = 'rank-name';
+      name.textContent = rank.label;
+      var desc = document.createElement('span');
+      desc.className = 'rank-desc';
+      desc.id = 'rank-desc-' + rank.id;
+      desc.textContent = rank.description;
+      label.appendChild(input);
+      label.appendChild(name);
+      label.appendChild(desc);
+      els['rank-choices'].appendChild(label);
     });
-    els.rank.addEventListener('change', function () { handlers.changeRank(els.rank.value); });
+    function chosenRank() {
+      var checked = els['rank-form'].querySelector('input[name="rank"]:checked');
+      return checked ? checked.value : null;
+    }
+    els['rank-form'].addEventListener('submit', function (e) {
+      e.preventDefault();
+      handlers.chooseRank(chosenRank());
+    });
+    els['rank-choices'].addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      handlers.chooseRank(chosenRank());
+    });
+    els['new-game'].addEventListener('click', function () { handlers.newGame(); });
+    els['change-rank'].addEventListener('click', function () { handlers.changeRank(); });
+    els['change-rank-inline'].addEventListener('click', function () { handlers.changeRank(); });
 
     els.rotate.addEventListener('click', function () { handlers.rotate(); });
     els.randomize.addEventListener('click', function () { handlers.randomize(); });
@@ -163,7 +196,7 @@
     // Shift rotates when pressed and released on its own, so Shift+Tab doesn't rotate.
     var shiftAlone = false;
     function placingKeys(e) {
-      return current && current.game.phase === 'placing' &&
+      return current && !current.picking && current.game.phase === 'placing' &&
         !(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) && !(e.ctrlKey || e.metaKey || e.altKey);
     }
     document.addEventListener('keydown', function (e) {
@@ -313,17 +346,23 @@
   function render(state) {
     current = state;
     var game = state.game;
-    document.body.className = 'phase-' + game.phase;
+    var picking = state.picking;
+    document.body.className = 'phase-' + (picking ? 'choosing' : game.phase);
 
-    els.rank.value = state.rank;
+    var rankLabel = state.rankLabel;
+    els['rank-badge'].textContent = 'Rank: ' + rankLabel;
+    els['rank-badge'].setAttribute('aria-label', 'MacArthur\'s rank: ' + rankLabel);
+    els['rank-badge'].hidden = picking;
+    els['new-game'].hidden = picking;
+    els['rank-panel'].hidden = !picking;
     els.tally.textContent = 'Wins ' + state.tally.wins + ' \u00b7 Losses ' + state.tally.losses;
     els.prompt.textContent = state.prompt;
     els['last-player'].textContent = state.lastPlayer;
     els['last-computer'].textContent = state.lastComputer;
 
-    els.placement.hidden = game.phase !== 'placing';
-    els['fire-panel'].hidden = game.phase !== 'playing';
-    els['end-panel'].hidden = game.phase !== 'over';
+    els.placement.hidden = picking || game.phase !== 'placing';
+    els['fire-panel'].hidden = picking || game.phase !== 'playing';
+    els['end-panel'].hidden = picking || game.phase !== 'over';
 
     if (game.phase === 'placing') {
       renderShipList(state);
@@ -357,6 +396,8 @@
   function showEndScreen(state, info) {
     var lost = state.game.winner === 'computer';
     els['end-title'].textContent = lost ? 'MacArthur wins' : 'Victory!';
+    els['end-rank'].textContent = (lost ? 'Beaten by MacArthur at the rank of ' : 'You beat MacArthur at the rank of ') +
+      state.rankLabel + '.';
     els['end-last'].textContent = 'Final shot: ' + info.lastShot;
     els['end-text'].textContent = lost
       ? 'MacArthur sank your entire fleet.'
@@ -380,6 +421,15 @@
     }
   }
 
+  // Shows the picker with `rankId` selected and puts keyboard focus on it.
+  function showPicker(rankId) {
+    var input = byId('rank-' + rankId);
+    if (input) {
+      input.checked = true;
+      input.focus();
+    }
+  }
+
   function focusFirstEnemyCell() {
     var p = focusPos.enemy;
     cells.enemy[p.row][p.col].focus();
@@ -396,6 +446,7 @@
     announce: announce,
     showEndScreen: showEndScreen,
     hideEndScreen: hideEndScreen,
+    showPicker: showPicker,
     clearShotInput: clearShotInput,
     focusShotInput: focusShotInput,
     focusFirstEnemyCell: focusFirstEnemyCell,

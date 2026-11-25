@@ -211,10 +211,86 @@
   }
 
   test('ranks are listed weakest first: Rookie, Officer, General', function () {
-    assert.deepEqual(opponents.list(), [
-      { id: 'rookie', label: 'Rookie' }, { id: 'officer', label: 'Officer' }, { id: 'general', label: 'General' }
+    assert.deepEqual(opponents.list().map(function (r) { return [r.id, r.label]; }), [
+      ['rookie', 'Rookie'], ['officer', 'Officer'], ['general', 'General']
     ]);
-    assert.equal(opponents.DEFAULT_RANK, 'rookie');
+    opponents.list().forEach(function (r) { assert.ok(r.description, r.label + ' has a description for the picker'); });
+  });
+
+  test('the rank picker starts on the Officer', function () {
+    assert.equal(opponents.DEFAULT_RANK, 'officer');
+  });
+
+  test('each rank choice starts a battle against that rank', function () {
+    opponents.list().forEach(function (rank) {
+      var battle = opponents.newBattle(rank.id, rules.createRng(21));
+      assert.equal(battle.rank, rank.id);
+      assert.equal(battle.opponent.rank, rank.id, rank.label + ' opponent');
+      assert.equal(battle.game.phase, 'placing');
+      assert.ok(rules.isFleetComplete(battle.game.enemy), rank.label + ' placed its fleet');
+      assert.equal(battle.game.player.ships.length, 0);
+      assert.deepEqual(battle.computerShots, []);
+    });
+  });
+
+  // Plays `turns` turns each of a battle, the way js/main.js does.
+  function playTurns(battle, rng, turns) {
+    rules.placeFleetRandomly(battle.game.player, rng);
+    rules.startGame(battle.game, rng);
+    for (var i = 0; i < turns && battle.game.phase === 'playing'; i++) {
+      if (battle.game.turn === 'player') {
+        rules.playerFire(battle.game, Math.floor(i / 10), i % 10);
+      } else {
+        var shot = battle.opponent.chooseShot();
+        var outcome = rules.computerFire(battle.game, shot.row, shot.col);
+        battle.opponent.recordResult(shot.row, shot.col, outcome);
+        battle.computerShots.push({ row: shot.row, col: shot.col, outcome: outcome });
+      }
+    }
+  }
+
+  function shotCount(board) {
+    var n = 0;
+    board.shots.forEach(function (row) { row.forEach(function (s) { if (s) n++; }); });
+    return n;
+  }
+
+  test('changing rank (or playing again) fully resets both boards and the opponent\'s memory', function () {
+    var ids = opponents.list().map(function (r) { return r.id; });
+    ids.forEach(function (from) {
+      ids.forEach(function (to) {
+        var rng = rules.createRng(31);
+        var old = opponents.newBattle(from, rng);
+        playTurns(old, rng, 40);
+        assert.ok(old.computerShots.length > 0 && shotCount(old.game.enemy) > 0, 'the first battle was played');
+
+        var fresh = opponents.newBattle(to, rng);
+        assert.equal(fresh.opponent.rank, to);
+        assert.notEqual(fresh.opponent, old.opponent, 'a new opponent, not the old one');
+        assert.notEqual(fresh.game, old.game, 'a new game');
+        assert.equal(fresh.game.phase, 'placing');
+        assert.equal(fresh.game.player.ships.length, 0, 'your board is empty again');
+        assert.equal(shotCount(fresh.game.player), 0, 'no shots on your board');
+        assert.equal(shotCount(fresh.game.enemy), 0, 'no shots on MacArthur\'s board');
+        assert.ok(rules.isFleetComplete(fresh.game.enemy), 'MacArthur placed a new fleet');
+        assert.deepEqual(fresh.computerShots, []);
+
+        // The new opponent remembers nothing: over a whole board of misses it
+        // fires at all 100 squares, including the ones fired at last battle.
+        if (fresh.opponent.mode) assert.notEqual(fresh.opponent.mode(), 'target', 'not still chasing an old hit');
+        var seen = {};
+        for (var i = 0; i < 100; i++) {
+          var s = fresh.opponent.chooseShot();
+          assert.ok(s && !seen[s.row + ',' + s.col], from + ' -> ' + to + ' fires at a fresh square');
+          seen[s.row + ',' + s.col] = true;
+          fresh.opponent.recordResult(s.row, s.col, { result: 'miss' });
+        }
+      });
+    });
+  });
+
+  test('an unknown rank choice starts a battle against the Officer', function () {
+    assert.equal(opponents.newBattle('admiral', rules.createRng(1)).opponent.rank, 'officer');
   });
 
   test('every rank has the same four actions', function () {
@@ -227,8 +303,8 @@
     });
   });
 
-  test('an unknown rank falls back to the Rookie', function () {
-    assert.equal(opponents.createOpponent('admiral', rules.createRng(1)).rank, 'rookie');
+  test('an unknown rank falls back to the Officer', function () {
+    assert.equal(opponents.createOpponent('admiral', rules.createRng(1)).rank, 'officer');
   });
 
   test('every rank places a complete, legal fleet on its own board', function () {
