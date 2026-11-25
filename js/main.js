@@ -1,6 +1,6 @@
 /*
  * Starts the game and connects the rules (js/rules.js) and MacArthur
- * (js/computer.js) to the screen (js/ui.js).
+ * (js/opponents.js, at whichever rank is chosen) to the screen (js/ui.js).
  * Optional address-bar settings for testing: ?seed=123 makes every random
  * choice repeatable, ?fast makes MacArthur fire without the usual pause.
  */
@@ -8,10 +8,11 @@
   'use strict';
 
   var rules = root.Battleship.rules;
-  var computer = root.Battleship.computer;
+  var opponents = root.Battleship.opponents;
   var ui = root.Battleship.ui;
   var NAME = rules.COMPUTER_NAME;
   var TALLY_KEY = 'battleship-cog-tally';
+  var RANK_KEY = 'battleship-cog-rank';
 
   var params = new URLSearchParams(root.location.search);
   var rng = params.has('seed') ? rules.createRng(Number(params.get('seed'))) : Math.random;
@@ -19,7 +20,9 @@
 
   var state = {
     game: null,
-    ai: null,
+    rank: loadRank(),
+    opponent: null,
+    computerShots: [],
     orientation: rules.HORIZONTAL,
     selected: null,
     revealed: false,
@@ -40,6 +43,31 @@
       if (saved && typeof saved.wins === 'number' && typeof saved.losses === 'number') return saved;
     } catch (e) { /* storage unavailable: keep the tally in memory only */ }
     return { wins: 0, losses: 0 };
+  }
+
+  // The chosen rank is remembered the same way as the tally.
+  function loadRank() {
+    try {
+      var saved = root.sessionStorage.getItem(RANK_KEY);
+      if (opponents.find(saved)) return saved;
+    } catch (e) { /* storage unavailable */ }
+    return opponents.DEFAULT_RANK;
+  }
+
+  function saveRank() {
+    try { root.sessionStorage.setItem(RANK_KEY, state.rank); } catch (e) { /* ignore */ }
+  }
+
+  // Switching rank mid-game: the new rank takes over from MacArthur's next
+  // shot and is told every shot fired so far, so it never repeats a square.
+  function changeRank(id) {
+    var rank = opponents.find(id);
+    if (!rank || id === state.rank) return;
+    state.rank = id;
+    saveRank();
+    state.opponent = opponents.createOpponent(id, rng, state.computerShots);
+    ui.announce(NAME + ' now plays at the rank of ' + rank.label + '.');
+    render();
   }
 
   function saveTally() {
@@ -67,8 +95,9 @@
 
   function newGame() {
     clearTimeout(computerTimer);
-    state.game = rules.createGame(rng);
-    state.ai = computer.createComputer(rng);
+    state.opponent = opponents.createOpponent(state.rank, rng);
+    state.computerShots = [];
+    state.game = rules.createGame(rng, state.opponent.placeShips);
     state.orientation = rules.HORIZONTAL;
     state.selected = firstUnplaced();
     state.revealed = false;
@@ -235,9 +264,10 @@
   function computerTurn() {
     var game = state.game;
     if (game.phase !== 'playing' || game.turn !== 'computer') return;
-    var shot = computer.chooseShot(state.ai);
+    var shot = state.opponent.chooseShot();
     var outcome = rules.computerFire(game, shot.row, shot.col);
-    computer.recordResult(state.ai, shot.row, shot.col, outcome);
+    state.opponent.recordResult(shot.row, shot.col, outcome);
+    state.computerShots.push({ row: shot.row, col: shot.col, outcome: outcome });
     var text = rules.shotMessage('computer', shot.row, shot.col, outcome);
     state.lastComputer = text;
     addLog('computer', text);
@@ -279,6 +309,8 @@
   }
 
   ui.init({
+    ranks: opponents.list(),
+    changeRank: changeRank,
     cellActivated: function (which, row, col) {
       if (which === 'player' && state.game.phase === 'placing') placeAt(row, col);
       else if (which === 'enemy') { state.typedShot = false; fireAt(row, col); }

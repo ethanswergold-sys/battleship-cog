@@ -39,6 +39,9 @@ h2 { font-size: 1.15rem; margin: 0 0 0.5rem; }
 .site-header h1 { margin: 0; font-size: 1.6rem; }
 .site-header .vs { font-weight: 400; color: var(--muted); font-size: 1.1rem; }
 .tally { margin: 0; font-weight: 600; }
+.header-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; }
+.rank-picker { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+.rank-picker select { font: inherit; min-height: 2.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; }
 
 button, input { font: inherit; }
 

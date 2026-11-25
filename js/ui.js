@@ -123,7 +123,7 @@
 
   function init(h) {
     handlers = h;
-    ['tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
+    ['rank', 'tally', 'announcer', 'prompt', 'last-player', 'last-computer', 'placement', 'ship-list',
       'rotate', 'randomize', 'clear', 'start', 'fire-panel', 'shot-form', 'shot-input', 'fire',
       'end-panel', 'end-panel-heading', 'reveal-inline', 'play-again-inline', 'player-board',
       'enemy-board', 'player-fleet', 'enemy-fleet', 'log', 'end-dialog', 'end-title', 'end-last', 'end-text',
@@ -133,6 +133,14 @@
 
     buildBoard(els['player-board'], 'player', 'Your fleet. Rows A to J, columns 1 to 10.');
     buildBoard(els['enemy-board'], 'enemy', 'MacArthur\'s waters. Rows A to J, columns 1 to 10.');
+
+    h.ranks.forEach(function (rank) {
+      var option = document.createElement('option');
+      option.value = rank.id;
+      option.textContent = rank.label;
+      els.rank.appendChild(option);
+    });
+    els.rank.addEventListener('change', function () { handlers.changeRank(els.rank.value); });
 
     els.rotate.addEventListener('click', function () { handlers.rotate(); });
     els.randomize.addEventListener('click', function () { handlers.randomize(); });
@@ -156,7 +164,7 @@
     var shiftAlone = false;
     function placingKeys(e) {
       return current && current.game.phase === 'placing' &&
-        !(e.target && e.target.tagName === 'INPUT') && !(e.ctrlKey || e.metaKey || e.altKey);
+        !(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) && !(e.ctrlKey || e.metaKey || e.altKey);
     }
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Shift') shiftAlone = false;
@@ -307,6 +315,7 @@
     var game = state.game;
     document.body.className = 'phase-' + game.phase;
 
+    els.rank.value = state.rank;
     els.tally.textContent = 'Wins ' + state.tally.wins + ' \u00b7 Losses ' + state.tally.losses;
     els.prompt.textContent = state.prompt;
     els['last-player'].textContent = state.lastPlayer;

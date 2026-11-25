@@ -14,6 +14,9 @@ so it runs on GitHub Pages straight from the repo root, or by double-clicking
    One shot per turn. White peg = miss, red peg = hit.
 4. Sink all five of MacArthur's ships before he sinks yours. If you lose, you can reveal where his
    remaining ships were. Play again keeps your win/loss tally until you close the window.
+5. **Opponent rank:** pick how well MacArthur plays from the *Opponent rank* menu at the top:
+   *Rookie* fires at random, *Officer* hunts and then targets. You can change it at any time; mid-game,
+   the new rank takes over from MacArthur's next shot and never fires at a square already tried.
 
 Everything works with a mouse, a touchscreen or the keyboard alone (Tab, arrow keys and Enter), and
 screen readers announce every shot.
@@ -31,9 +34,12 @@ GitHub Pages: Settings → Pages → deploy from the `main` branch, root folder.
 | `js/ui.js` | Draws the screen and handles clicks, taps and keys. Makes no rule decisions. |
 | `js/main.js` | Starts the game and connects the rules and MacArthur to the screen. |
 | `js/rules.js` | The game rules: placing ships, firing shots, hits, misses, sinking, turns, winning. No screen code. |
-| `js/computer.js` | MacArthur, the computer opponent (hunt-and-target strategy). No screen code. |
+| `js/opponents.js` | The list of ranks MacArthur can play at, and the one place that creates "the current opponent". |
+| `js/ranks/rookie.js` | Rookie rank: fires at random untried squares and ignores hits. No screen code. |
+| `js/ranks/officer.js` | Officer rank: hunt-and-target strategy. No screen code. |
 | `tests/rules.test.js` | Automated checks for the rules. |
-| `tests/computer.test.js` | Automated checks for MacArthur, including 2,000 simulated games. |
+| `tests/opponents.test.js` | Automated checks for the ranks, including thousands of simulated games. |
+| `tests/simulate.js` | Plays 1,000 games per rank and prints a table of average, fewest and most shots: `node tests/simulate.js`. |
 | `tests/run.html` | Open in any browser to run the automated checks. |
 | `tests/harness.js` | The small test runner used by `tests/run.html`. |
 

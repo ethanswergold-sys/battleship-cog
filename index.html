@@ -10,7 +10,12 @@
 <body class="phase-placing">
   <header class="site-header">
     <h1>Battleship <span class="vs">vs. MacArthur</span></h1>
-    <p class="tally" id="tally">Wins 0 · Losses 0</p>
+    <div class="header-controls">
+      <label class="rank-picker" for="rank">Opponent rank
+        <select id="rank"></select>
+      </label>
+      <p class="tally" id="tally">Wins 0 · Losses 0</p>
+    </div>
   </header>
 
   <main>
@@ -100,9 +105,11 @@
     </div>
   </dialog>
 
-  <!-- Order matters: rules, then MacArthur, then the screen, then startup. -->
+  <!-- Order matters: rules, then each rank, then the list of ranks, then the screen, then startup. -->
   <script src="js/rules.js"></script>
-  <script src="js/computer.js"></script>
+  <script src="js/ranks/rookie.js"></script>
+  <script src="js/ranks/officer.js"></script>
+  <script src="js/opponents.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -197,10 +197,13 @@
 
   // A new game: MacArthur's fleet is placed at random, the player's board is
   // empty and waiting for ship placement.
-  function createGame(rng) {
+  // placeEnemyFleet(board) lets the opponent place its own ships; by default
+  // they are placed randomly.
+  function createGame(rng, placeEnemyFleet) {
     rng = rng || Math.random;
     var enemy = createBoard();
-    placeFleetRandomly(enemy, rng);
+    if (placeEnemyFleet) placeEnemyFleet(enemy);
+    else placeFleetRandomly(enemy, rng);
     return {
       phase: 'placing',
       player: createBoard(),
