@@ -183,7 +183,7 @@
   var api = {
     id: 'officer',
     label: 'Officer',
-    description: 'Take on a challenge.',
+    description: 'Get past the waves.',
     create: create,
     createNotes: createNotes,
     chooseShot: chooseShot,
