@@ -15,7 +15,8 @@ so it runs on GitHub Pages straight from the repo root, or by double-clicking
 4. Sink all five of MacArthur's ships before he sinks yours. If you lose, you can reveal where his
    remaining ships were. Play again keeps your win/loss tally until you close the window.
 5. **Opponent rank:** pick how well MacArthur plays from the *Opponent rank* menu at the top:
-   *Rookie* fires at random, *Officer* hunts and then targets. You can change it at any time; mid-game,
+   *Rookie* fires at random, *Officer* hunts and then targets, *General* works out where ships are most
+   likely to be. You can change it at any time; mid-game,
    the new rank takes over from MacArthur's next shot and never fires at a square already tried.
 
 Everything works with a mouse, a touchscreen or the keyboard alone (Tab, arrow keys and Enter), and
@@ -37,6 +38,7 @@ GitHub Pages: Settings → Pages → deploy from the `main` branch, root folder.
 | `js/opponents.js` | The list of ranks MacArthur can play at, and the one place that creates "the current opponent". |
 | `js/ranks/rookie.js` | Rookie rank: fires at random untried squares and ignores hits. No screen code. |
 | `js/ranks/officer.js` | Officer rank: hunt-and-target strategy. No screen code. |
+| `js/ranks/general.js` | General rank: probability map of where the remaining ships could be. No screen code. |
 | `tests/rules.test.js` | Automated checks for the rules. |
 | `tests/opponents.test.js` | Automated checks for the ranks, including thousands of simulated games. |
 | `tests/simulate.js` | Plays 1,000 games per rank and prints a table of average, fewest and most shots: `node tests/simulate.js`. |

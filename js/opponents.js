@@ -14,11 +14,15 @@
 
   var isNode = typeof module === 'object' && module.exports;
   var ranks = isNode
-    ? { rookie: require('./ranks/rookie.js'), officer: require('./ranks/officer.js') }
+    ? {
+        rookie: require('./ranks/rookie.js'),
+        officer: require('./ranks/officer.js'),
+        general: require('./ranks/general.js')
+      }
     : root.Battleship.ranks;
 
-  // Add the General here (and its script tag in index.html) when it exists.
-  var RANKS = [ranks.rookie, ranks.officer];
+  // A new rank also needs its script tag in index.html and tests/run.html.
+  var RANKS = [ranks.rookie, ranks.officer, ranks.general];
   var DEFAULT_RANK = 'rookie';
 
   function find(id) {

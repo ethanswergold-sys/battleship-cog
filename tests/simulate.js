@@ -11,17 +11,21 @@ var opponents = require('../js/opponents.js');
 var GAMES = Number(process.argv[2]) || 1000;
 var rng = rules.createRng(20261125);
 
-console.log('| Rank | Games | Average shots | Fewest | Most |');
-console.log('|---|---|---|---|---|');
+var now = typeof performance !== 'undefined' ? function () { return performance.now(); } : Date.now;
+
+console.log('| Rank | Games | Average shots | Fewest | Most | Slowest shot choice |');
+console.log('|---|---|---|---|---|---|');
 opponents.list().forEach(function (rank) {
-  var total = 0, fewest = Infinity, most = 0;
+  var total = 0, fewest = Infinity, most = 0, slowest = 0;
   for (var g = 0; g < GAMES; g++) {
     var board = rules.createBoard();
     rules.placeFleetRandomly(board, rng);
     var opponent = opponents.createOpponent(rank.id, rng);
     var fired = {}, shots = 0;
     while (!rules.allSunk(board)) {
+      var start = now();
       var shot = opponent.chooseShot();
+      slowest = Math.max(slowest, now() - start);
       var key = shot.row + ',' + shot.col;
       if (fired[key]) throw new Error(rank.label + ' repeated ' + rules.formatCoordinate(shot.row, shot.col));
       fired[key] = true;
@@ -34,5 +38,5 @@ opponents.list().forEach(function (rank) {
     fewest = Math.min(fewest, shots);
     most = Math.max(most, shots);
   }
-  console.log('| ' + rank.label + ' | ' + GAMES + ' | ' + (total / GAMES).toFixed(1) + ' | ' + fewest + ' | ' + most + ' |');
+  console.log('| ' + rank.label + ' | ' + GAMES + ' | ' + (total / GAMES).toFixed(1) + ' | ' + fewest + ' | ' + most + ' | ' + slowest.toFixed(2) + ' ms |');
 });
